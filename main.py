@@ -8,12 +8,18 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 driver = webdriver.Chrome()
-driver.get('https://stadtlandflussonline.net/g/AJDICIXW')
+driver.get('https://stadtlandflussonline.net/g/AZYICJFQ')
+rounds = int(driver.find_element_by_css_selector('.alert.alert-info').text[-1])
 driver.find_element_by_id('gameForm:joinMe').click()
-while True:
-    if 'FINISHED' in driver.title:
-        break
-    WebDriverWait(driver, 120).until(EC.title_contains('WRITING_CATEGORIES'))
+driver.close()
+
+
+
+'''
+driver.find_element_by_id('gameForm:joinMe').click()
+WebDriverWait(driver, 120).until(EC.title_contains('WRITING_CATEGORIES'))
+rounds = int(driver.title.split('/')[-1][0])
+for round in range(rounds):
     current_letter = WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.ID, 'currentLetter'))).text
     round_inputs = driver.find_elements_by_class_name('form-group')[:-1]
     for round_input in round_inputs:
@@ -22,6 +28,8 @@ while True:
         input_field.clear()
         input_field.send_keys(current_letter + category)
     driver.find_element_by_id('gameForm:checkSendBtn').click()
-    confirm_results = WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
+    confirm_results = WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.ID, 'gameForm:j_idt226')))
     confirm_results.click()
+    WebDriverWait(driver, 120).until(EC.title_contains('WRITING_CATEGORIES'))
 driver.close()
+'''
