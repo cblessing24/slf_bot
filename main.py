@@ -75,9 +75,6 @@ class SLFBot:
         else:
             return random.choice(answer_tags).text.split()[0]
 
-    def update_answers(self):
-        pass
-
 
 def main():
     slf_bot = SLFBot()
