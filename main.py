@@ -55,7 +55,7 @@ class SLFBot:
             input_field = category_and_input_field.find_element_by_tag_name('input')
             input_field.clear()
             input_field.send_keys(self.get_answer(category, current_letter))
-        # Do not submit results if unknown categories were encountered
+        # Do not submit answers if unknown categories were encountered
         if submit_flag:
             sub_button = WebDriverWait(driver, wait).until(ec.presence_of_element_located(
                 (By.ID, 'gameForm:checkSendBtn')))
@@ -72,7 +72,7 @@ class SLFBot:
         reg_exp = re.compile(SLFBot.game_answers_couplers[category])
         answer_tags = soup.find('h3', text=reg_exp).next_sibling.find_all('li')
         if not answer_tags:
-            return ''
+            return f'{current_letter} ({category}) does not exist'
         else:
             return random.choice(answer_tags).text.split()[0]
 
