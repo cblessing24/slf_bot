@@ -47,6 +47,9 @@ class SLFBot:
         categories_and_input_fields = driver.find_elements_by_class_name('form-group')[:-1]
         for category_and_input_field in categories_and_input_fields:
             category = category_and_input_field.text
+            # Skip unknown categories
+            if category not in SLFBot.game_answers_couplers:
+                continue
             input_field = category_and_input_field.find_element_by_tag_name('input')
             input_field.clear()
             input_field.send_keys(self.get_answer(category, current_letter))
