@@ -45,16 +45,21 @@ class SLFBot:
         current_letter = WebDriverWait(driver, wait).until(ec.presence_of_element_located((By.ID, 'currentLetter')))
         current_letter = current_letter.text
         categories_and_input_fields = driver.find_elements_by_class_name('form-group')[:-1]
+        submit_flag = True
         for category_and_input_field in categories_and_input_fields:
             category = category_and_input_field.text
             # Skip unknown categories
             if category not in SLFBot.game_answers_couplers:
+                submit_flag = False
                 continue
             input_field = category_and_input_field.find_element_by_tag_name('input')
             input_field.clear()
             input_field.send_keys(self.get_answer(category, current_letter))
-        sub_button = WebDriverWait(driver, wait).until(ec.presence_of_element_located((By.ID, 'gameForm:checkSendBtn')))
-        sub_button.send_keys(Keys.RETURN)
+        # Do not submit results if unknown categories were encountered
+        if submit_flag:
+            sub_button = WebDriverWait(driver, wait).until(ec.presence_of_element_located(
+                (By.ID, 'gameForm:checkSendBtn')))
+            sub_button.send_keys(Keys.RETURN)
         results_button = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
         results_button.send_keys(Keys.RETURN)
 
