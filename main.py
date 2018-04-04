@@ -25,11 +25,10 @@ class SLFBot:
         'Filme/Serien': 'Filmtitel'
     }
 
-    def __init__(self):
-        pass
+    def __init__(self, wait=120):
+        self.wait = wait
 
     def play(self):
-        wait = 60
         game_string = input('>> ')
         url = SLFBot.game_base_url + '/g/' + game_string
         driver = webdriver.Chrome()
@@ -38,7 +37,8 @@ class SLFBot:
         join_game_button = driver.find_element_by_id('gameForm:joinMe').find_element_by_tag_name('a')
         join_game_button.send_keys(Keys.RETURN)
         for current_round in range(number_of_rounds):
-            self.play_round(driver, wait)
+            self.play_round(driver, self.wait)
+        driver.close()
 
     def play_round(self, driver, wait):
         WebDriverWait(driver, wait).until(ec.title_contains('WRITING_CATEGORIES'))
@@ -55,7 +55,8 @@ class SLFBot:
         results_button = WebDriverWait(driver, 60).until(ec.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
         results_button.send_keys(Keys.RETURN)
 
-    def get_answer(self, category, current_letter):
+    @staticmethod
+    def get_answer(category, current_letter):
         url = SLFBot.answers_base_url + '/buchstabe-' + current_letter.lower()
         res = requests.get(url, verify=False)
         res.raise_for_status()
