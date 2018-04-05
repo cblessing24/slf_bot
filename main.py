@@ -51,7 +51,7 @@ class SLFBot:
                     continue
                 input_field = category_and_input_field.find_element_by_tag_name('input')
                 input_field.clear()
-                input_field.send_keys(self.get_answer(category, current_letter))
+                input_field.send_keys(SLFBot.get_answer(category, current_letter))
             # Do not submit answers if unknown categories were encountered
             if submit_flag:
                 sub_button = WebDriverWait(driver, self.wait).until(ec.presence_of_element_located(
@@ -62,13 +62,13 @@ class SLFBot:
             results_button.send_keys(Keys.RETURN)
         driver.close()
 
-    @staticmethod
-    def get_answer(category, current_letter):
+    @classmethod
+    def get_answer(cls, category, current_letter):
         url = SLFBot.answers_base_url + '/buchstabe-' + current_letter.lower()
         res = requests.get(url, verify=False)
         res.raise_for_status()
         soup = BeautifulSoup(res.text, 'html.parser')
-        reg_exp = re.compile(SLFBot.game_answers_couplers[category])
+        reg_exp = re.compile(cls.game_answers_couplers[category])
         category_tag = soup.find('h3', text=reg_exp)
         answer_tags = None
         for next_element in category_tag.next_elements:
