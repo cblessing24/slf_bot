@@ -69,7 +69,12 @@ class SLFBot:
         res.raise_for_status()
         soup = BeautifulSoup(res.text, 'html.parser')
         reg_exp = re.compile(SLFBot.game_answers_couplers[category])
-        answer_tags = soup.find('h3', text=reg_exp).next_sibling.find_all('li')
+        category_tag = soup.find('h3', text=reg_exp)
+        answer_tags = None
+        for next_element in category_tag.next_elements:
+            if next_element.name == 'ul':
+                answer_tags = next_element.find_all('li')
+                break
         if not answer_tags:
             return f'{current_letter} ({category}) does not exist'
         else:
