@@ -73,6 +73,12 @@ class SLFBot:
         round_count = int(game_information[3].next_sibling)
         return categories, language, player_count, round_count
 
+    def join_game(self, game_url):
+        driver = webdriver.Chrome()
+        driver.get(game_url)
+        join_game_button = driver.find_element_by_id('gameForm:joinMe')
+        join_game_button.click()
+
     @classmethod
     def get_answer(cls, category, current_letter):
         url = SLFBot.answers_base_url + '/buchstabe-' + current_letter.lower()
@@ -94,11 +100,7 @@ class SLFBot:
 
 def main():
     slf_bot = SLFBot()
-    categories, language, player_count, round_count = slf_bot.get_game_info('https://stadtlandflussonline.net/g/ATOID6FW')
-    print(categories)
-    print(language)
-    print(player_count)
-    print(round_count)
+    slf_bot.join_game('https://stadtlandflussonline.net/g/ATOID6FW')
 
 
 if __name__ == '__main__':
