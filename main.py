@@ -62,6 +62,17 @@ class SLFBot:
             results_button.send_keys(Keys.RETURN)
         driver.close()
 
+    def get_game_info(self, game_url):
+        game_page_response = requests.get(game_url)
+        game_page_response.raise_for_status()
+        game_page_soup = BeautifulSoup(game_page_response.text, 'html.parser')
+        game_information = game_page_soup.find('div', class_='alert alert-info').find_all('b')
+        categories = str(game_information[0].next_sibling).strip().split(', ')
+        language = game_page_soup.find('span', class_='flag-xs').attrs['class'][-1]
+        player_count = int(game_information[2].next_sibling)
+        round_count = int(game_information[3].next_sibling)
+        return categories, language, player_count, round_count
+
     @classmethod
     def get_answer(cls, category, current_letter):
         url = SLFBot.answers_base_url + '/buchstabe-' + current_letter.lower()
@@ -83,7 +94,11 @@ class SLFBot:
 
 def main():
     slf_bot = SLFBot()
-    slf_bot.play()
+    categories, language, player_count, round_count = slf_bot.get_game_info('https://stadtlandflussonline.net/g/ATOID6FW')
+    print(categories)
+    print(language)
+    print(player_count)
+    print(round_count)
 
 
 if __name__ == '__main__':
