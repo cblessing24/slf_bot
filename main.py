@@ -77,7 +77,7 @@ class SLFBot:
     def get_answers(cls, categories, current_letter):
         answers = []
         for category in categories:
-            answers.append(SLFBot.get_answer(category, current_letter))
+            answers.append(cls.get_answer(category, current_letter))
         return answers
 
     @classmethod
