@@ -27,40 +27,14 @@ class SLFBot:
 
     def __init__(self, wait=120):
         self.wait = wait
+        self.driver = webdriver.Chrome()
 
-    def play(self):
-        game_string = input('>> ')
-        url = SLFBot.game_base_url + '/g/' + game_string
-        driver = webdriver.Chrome()
-        driver.get(url)
-        number_of_rounds = int(driver.find_element_by_css_selector('.alert.alert-info').text[-1])
-        join_game_button = driver.find_element_by_id('gameForm:joinMe').find_element_by_tag_name('a')
-        join_game_button.send_keys(Keys.RETURN)
-        for current_round in range(number_of_rounds):
-            WebDriverWait(driver, self.wait).until(ec.title_contains('WRITING_CATEGORIES'))
-            current_letter = WebDriverWait(driver, self.wait).until(ec.presence_of_element_located(
-                (By.ID, 'currentLetter')))
-            current_letter = current_letter.text
-            categories_and_input_fields = driver.find_elements_by_class_name('form-group')[:-1]
-            submit_flag = True
-            for category_and_input_field in categories_and_input_fields:
-                category = category_and_input_field.text
-                # Skip unknown categories
-                if category not in SLFBot.game_answers_couplers:
-                    submit_flag = False
-                    continue
-                input_field = category_and_input_field.find_element_by_tag_name('input')
-                input_field.clear()
-                input_field.send_keys(SLFBot.get_answer(category, current_letter))
-            # Do not submit answers if unknown categories were encountered
-            if submit_flag:
-                sub_button = WebDriverWait(driver, self.wait).until(ec.presence_of_element_located(
-                    (By.ID, 'gameForm:checkSendBtn')))
-                sub_button.send_keys(Keys.RETURN)
-            results_button = WebDriverWait(driver, 60).until(
-                ec.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
-            results_button.send_keys(Keys.RETURN)
-        driver.close()
+    def play(self, game_url):
+        categories, language, player_count, round_count = self.get_game_info(game_url)
+        self.join_game(game_url)
+        for round in range(round_count):
+            self.play_round(categories)
+            self.confirm_results()
 
     def get_game_info(self, game_url):
         game_page_response = requests.get(game_url)
@@ -74,10 +48,33 @@ class SLFBot:
         return categories, language, player_count, round_count
 
     def join_game(self, game_url):
-        driver = webdriver.Chrome()
-        driver.get(game_url)
-        join_game_button = driver.find_element_by_id('gameForm:joinMe')
+        self.driver.get(game_url)
+        join_game_button = self.driver.find_element_by_id('gameForm:joinMe')
         join_game_button.click()
+
+    def play_round(self, categories):
+        WebDriverWait(self.driver, self.wait).until(ec.title_contains('WRITING_CATEGORIES'))
+        wait_letter = WebDriverWait(self.driver, self.wait)
+        current_letter = wait_letter.until(ec.presence_of_element_located((By.ID, 'currentLetter'))).text
+        answers = SLFBot.get_answers(categories, current_letter)
+        input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
+        for answer, input_field in zip(answers, input_fields):
+            input_field.clear()
+            input_field.send_keys(answer)
+        self.driver.find_element_by_id('gameForm:checkSendBtn').send_keys(Keys.RETURN)
+
+    def confirm_results(self):
+        WebDriverWait(self.driver, self.wait).until(ec.title_contains('CONFIRMATION_RESULTS'))
+        wait = WebDriverWait(self.driver, self.wait)
+        confirm_button = wait.until(ec.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
+        confirm_button.send_keys(Keys.RETURN)
+
+    @classmethod
+    def get_answers(cls, categories, current_letter):
+        answers = []
+        for category in categories:
+            answers.append(SLFBot.get_answer(category, current_letter))
+        return answers
 
     @classmethod
     def get_answer(cls, category, current_letter):
@@ -100,7 +97,7 @@ class SLFBot:
 
 def main():
     slf_bot = SLFBot()
-    slf_bot.join_game('https://stadtlandflussonline.net/g/ATOID6FW')
+    slf_bot.play('https://stadtlandflussonline.net/g/AH6IEFQA')
 
 
 if __name__ == '__main__':
