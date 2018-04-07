@@ -32,13 +32,14 @@ class SLFBot:
     def play(self, game_url):
         categories, language, player_count, round_count = self.get_game_info(game_url)
         self.join_game(game_url)
-        for round in range(round_count):
+        for current_round in range(round_count):
             current_letter = self.get_current_letter()
             answers = self.get_answers(categories, current_letter)
-            self.play_round(categories, current_letter)
+            self.send_answers(answers)
             self.confirm_results()
 
-    def get_game_info(self, game_url):
+    @staticmethod
+    def get_game_info(game_url):
         game_page_response = requests.get(game_url)
         game_page_response.raise_for_status()
         game_page_soup = BeautifulSoup(game_page_response.text, 'html.parser')
@@ -60,14 +61,6 @@ class SLFBot:
             ec.presence_of_element_located((By.ID, 'currentLetter'))).text
 
     def send_answers(self, answers):
-        input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
-        for answer, input_field in zip(answers, input_fields):
-            input_field.clear()
-            input_field.send_keys(answer)
-        self.driver.find_element_by_id('gameForm:checkSendBtn').send_keys(Keys.RETURN)
-
-    def play_round(self, categories, current_letter):
-        answers = SLFBot.get_answers(categories, current_letter)
         input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
         for answer, input_field in zip(answers, input_fields):
             input_field.clear()
