@@ -33,7 +33,8 @@ class SLFBot:
         categories, language, player_count, round_count = self.get_game_info(game_url)
         self.join_game(game_url)
         for round in range(round_count):
-            self.play_round(categories)
+            current_letter = self.get_current_letter()
+            self.play_round(categories, current_letter)
             self.confirm_results()
 
     def get_game_info(self, game_url):
@@ -52,10 +53,12 @@ class SLFBot:
         join_game_button = self.driver.find_element_by_id('gameForm:joinMe')
         join_game_button.click()
 
-    def play_round(self, categories):
+    def get_current_letter(self):
         WebDriverWait(self.driver, self.wait).until(ec.title_contains('WRITING_CATEGORIES'))
-        wait_letter = WebDriverWait(self.driver, self.wait)
-        current_letter = wait_letter.until(ec.presence_of_element_located((By.ID, 'currentLetter'))).text
+        return WebDriverWait(self.driver, self.wait).until(
+            ec.presence_of_element_located((By.ID, 'currentLetter'))).text
+
+    def play_round(self, categories, current_letter):
         answers = SLFBot.get_answers(categories, current_letter)
         input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
         for answer, input_field in zip(answers, input_fields):
