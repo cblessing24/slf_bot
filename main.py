@@ -100,8 +100,22 @@ class SLFBot:
 
 
 def main():
-    slf_bot = SLFBot()
-    slf_bot.play('https://stadtlandflussonline.net/g/AH6IEFQA')
+    download_answers()
+
+
+def download_answers():
+    url = 'https://www.stadt-land-fluss-online.de/kategorien/'
+    res = requests.get(url, verify=False)
+    res.raise_for_status()
+    soup = BeautifulSoup(res.text, 'html.parser')
+    category_links = [tag.find('a')['href'] for tag in soup.find_all('h3')]
+    res_cities = requests.get(category_links[1], verify=False)
+    res_cities.raise_for_status()
+    soup_cities = BeautifulSoup(res_cities.text, 'html.parser')
+    list_tags = soup_cities.find('div', class_='post-content').find('ul').find_all('li')
+    letters = [tag.text.split(':')[0][-1] for tag in list_tags]
+    cities = [tag.text.split(':')[1].strip() for tag in list_tags]
+    print(letters, cities)
 
 
 if __name__ == '__main__':
