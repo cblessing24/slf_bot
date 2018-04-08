@@ -1,5 +1,7 @@
 import random
 import re
+import os
+import pickle
 
 import requests
 from selenium import webdriver
@@ -99,9 +101,19 @@ class SLFBot:
             return random.choice(answer_tags).text.split()[0]
 
 
+class SLFDatabase():
+    def __init__(self, database):
+        if os.path.exists(database):
+            self.database = pickle.load(database)
+        else:
+            self.database = {}
+
+    def save_database(self, database):
+        pickle.dump(self.database, database)
+
+
 def main():
     download_answers()
-
 
 def download_answers():
     url = 'https://www.stadt-land-fluss-online.de/kategorien/'
