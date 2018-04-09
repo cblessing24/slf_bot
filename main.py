@@ -117,25 +117,15 @@ class SLFDatabase:
         with open(self.database_path, 'wb') as file_object:
             pickle.dump(self.database, file_object)
 
-    def add_answer(self, category, letter, answer):
-        if self.check_database(category, letter, answer):
-            raise ValueError('Answer already in database')
-        if category not in self.database:
-            self.database[category] = {}
-        if letter not in self.database[category]:
-            self.database[category][letter] = []
-        self.database[category][letter].append(answer)
+    @staticmethod
+    def prepare_input(category, letter, answer):
+        category = category.lower()
+        letter = letter.upper()
+        answer = answer.lower()
+        return category, letter, answer
 
-    def remove_answer(self, category, letter, answer):
-        if not self.check_database(category, letter, answer):
-            raise ValueError('Answer not in database')
-        self.database[category][letter].remove(answer)
-        if not self.database[category][letter]:
-            del self.database[category][letter]
-        if not self.database[category]:
-            del self.database[category]
-
-    def check_database(self, category, letter, answer):
+    def check_database(self, raw_category, raw_letter, raw_answer):
+        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
         if category not in self.database:
             return False
         if letter not in self.database[category]:
@@ -144,6 +134,26 @@ class SLFDatabase:
             return False
         else:
             return True
+
+    def add_answer(self, raw_category, raw_letter, raw_answer):
+        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
+        if self.check_database(category, letter, answer):
+            raise ValueError('Answer already in database')
+        if category not in self.database:
+            self.database[category] = {}
+        if letter not in self.database[category]:
+            self.database[category][letter] = []
+        self.database[category][letter].append(answer)
+
+    def remove_answer(self, raw_category, raw_letter, raw_answer):
+        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
+        if not self.check_database(category, letter, answer):
+            raise ValueError('Answer not in database')
+        self.database[category][letter].remove(answer)
+        if not self.database[category][letter]:
+            del self.database[category][letter]
+        if not self.database[category]:
+            del self.database[category]
 
     def print_categories(self):
         for category in self.database.keys():
