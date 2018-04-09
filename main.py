@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 
 class SLFBot:
+
     game_base_url = 'https://stadtlandflussonline.net'
     answers_base_url = 'https://www.stadt-land-fluss-online.de'
     game_answers_couplers = {
@@ -101,19 +102,46 @@ class SLFBot:
             return random.choice(answer_tags).text.split()[0]
 
 
-class SLFDatabase():
-    def __init__(self, database):
-        if os.path.exists(database):
-            self.database = pickle.load(database)
+class SLFDatabase:
+
+    def __init__(self, database_path):
+        self.database_path = database_path
+        if os.path.exists(self.database_path):
+            with open(self.database_path, 'rb') as file_object:
+                self.database = pickle.load(file_object)
         else:
             self.database = {}
+            self.save_database()
 
-    def save_database(self, database):
-        pickle.dump(self.database, database)
+    def save_database(self):
+        with open(self.database_path, 'wb') as file_object:
+            pickle.dump(self.database, file_object)
+
+    def add_answer(self, category, letter, answer):
+        if category not in self.database:
+            self.database[category] = {}
+        if letter not in self.database[category]:
+            self.database[category][letter] = []
+        self.database[category][letter].append(answer)
+
+    def check_database(self, category, letter, answer):
+        if category not in self.database:
+            return False
+        if letter not in self.database[category]:
+            return False
+        if answer not in self.database[category][letter]:
+            return False
+        else:
+            return True
 
 
 def main():
-    download_answers()
+    slf_database = SLFDatabase('slf_database')
+    slf_database.add_answer('Stadt', 'G', 'Stuttgart')
+    slf_database.save_database()
+    print(slf_database.check_database('Stadt', 'G', 'Stuttgart'))
+    print(slf_database.check_database('Stadt', 'A', 'Aachen'))
+
 
 def download_answers():
     url = 'https://www.stadt-land-fluss-online.de/kategorien/'
