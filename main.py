@@ -118,11 +118,22 @@ class SLFDatabase:
             pickle.dump(self.database, file_object)
 
     def add_answer(self, category, letter, answer):
+        if self.check_database(category, letter, answer):
+            raise ValueError('Answer already in database')
         if category not in self.database:
             self.database[category] = {}
         if letter not in self.database[category]:
             self.database[category][letter] = []
         self.database[category][letter].append(answer)
+
+    def remove_answer(self, category, letter, answer):
+        if not self.check_database(category, letter, answer):
+            raise ValueError('Answer not in database')
+        self.database[category][letter].remove(answer)
+        if not self.database[category][letter]:
+            del self.database[category][letter]
+        if not self.database[category]:
+            del self.database[category]
 
     def check_database(self, category, letter, answer):
         if category not in self.database:
@@ -134,13 +145,19 @@ class SLFDatabase:
         else:
             return True
 
+    def print_categories(self):
+        for category in self.database.keys():
+            print(category)
+
 
 def main():
     slf_database = SLFDatabase('slf_database')
     slf_database.add_answer('Stadt', 'G', 'Stuttgart')
-    slf_database.save_database()
     print(slf_database.check_database('Stadt', 'G', 'Stuttgart'))
-    print(slf_database.check_database('Stadt', 'A', 'Aachen'))
+    slf_database.print_categories()
+    slf_database.remove_answer('Stadt', 'G', 'Stuttgart')
+    print(slf_database.check_database('Stadt', 'G', 'Stuttgart'))
+    slf_database.print_categories()
 
 
 def download_answers():
