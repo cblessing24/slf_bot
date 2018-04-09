@@ -162,27 +162,34 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_database.add_answer('Stadt', 'G', 'Stuttgart')
-    print(slf_database.check_database('Stadt', 'G', 'Stuttgart'))
-    slf_database.print_categories()
-    slf_database.remove_answer('Stadt', 'G', 'Stuttgart')
-    print(slf_database.check_database('Stadt', 'G', 'Stuttgart'))
-    slf_database.print_categories()
 
 
-def download_answers():
+def download_answers(database):
+    couplers = {
+        'Städte': 'Stadt',
+        'Länder': 'Land',
+        'Flüsse': 'Fluss'
+    }
     url = 'https://www.stadt-land-fluss-online.de/kategorien/'
     res = requests.get(url, verify=False)
     res.raise_for_status()
     soup = BeautifulSoup(res.text, 'html.parser')
-    category_links = [tag.find('a')['href'] for tag in soup.find_all('h3')]
-    res_cities = requests.get(category_links[1], verify=False)
-    res_cities.raise_for_status()
-    soup_cities = BeautifulSoup(res_cities.text, 'html.parser')
-    list_tags = soup_cities.find('div', class_='post-content').find('ul').find_all('li')
-    letters = [tag.text.split(':')[0][-1] for tag in list_tags]
-    cities = [tag.text.split(':')[1].strip() for tag in list_tags]
-    print(letters, cities)
+    category_tags = [tag.find('a') for tag in soup.find_all('h3', limit=3)]
+    categories = [tag.text.split()[0] for tag in category_tags]
+    category_links = [tag['href'] for tag in category_tags]
+    for category, category_link in zip(categories, category_links):
+        res_category = requests.get(category_link, verify=False)
+        res_category.raise_for_status()
+        soup_category = BeautifulSoup(res_category.text, 'html.parser')
+        list_tags = soup_category.find('div', class_='post-content').find('ul').find_all('li')
+        letters = [tag.text.split(':')[0][-1] for tag in list_tags]
+        answers = [tag.text.split(':')[1].strip() for tag in list_tags]
+        for index, answer in reversed(list(enumerate(answers))):
+            if answer.startswith('Es gibt'):
+                del letters[index]
+                del answers[index]
+        for letter, answer in zip(letters, answers):
+            database.add_answer(couplers[category], letter, answer)
 
 
 if __name__ == '__main__':
