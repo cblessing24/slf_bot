@@ -1,5 +1,4 @@
 import random
-import re
 import os
 import pickle
 
@@ -15,31 +14,15 @@ from bs4 import BeautifulSoup
 class SLFBot:
 
     game_base_url = 'https://stadtlandflussonline.net'
-    answers_base_url = 'https://www.stadt-land-fluss-online.de'
-    game_answers_couplers = {
-        'Stadt': 'Stadt|Städte',
-        'Land': 'Land|Länder',
-        'Fluss': 'Fluss|Flüsse',
-        'Vorname': 'Name|Namen',
-        'Tier': 'Tier|Tiere',
-        'Beruf': 'Beruf|Berufe',
-        'Pflanze': 'Pflanze|Pflanzen',
-        'Band/Musiker': 'Musiker',
-        'Filme/Serien': 'Filmtitel'
-    }
 
-    def __init__(self, wait=120):
+    def __init__(self, database_path='slf_database', wait=120):
+        self.database = SLFDatabase(database_path)
         self.wait = wait
         self.driver = webdriver.Chrome()
 
     def play(self, game_url):
         categories, language, player_count, round_count = self.get_game_info(game_url)
-        self.join_game(game_url)
-        for current_round in range(round_count):
-            current_letter = self.get_current_letter()
-            answers = self.get_answers(categories, current_letter)
-            self.send_answers(answers)
-            self.confirm_results()
+        self._join_game(game_url, categories, round_count)
 
     @staticmethod
     def get_game_info(game_url):
@@ -53,53 +36,44 @@ class SLFBot:
         round_count = int(game_information[3].next_sibling)
         return categories, language, player_count, round_count
 
-    def join_game(self, game_url):
+    def _join_game(self, game_url, categories, round_count):
         self.driver.get(game_url)
         join_game_button = self.driver.find_element_by_id('gameForm:joinMe')
         join_game_button.click()
+        for round_ in range(round_count):
+            self._get_letter(categories)
 
-    def get_current_letter(self):
+    def _get_letter(self, categories):
         WebDriverWait(self.driver, self.wait).until(ec.title_contains('WRITING_CATEGORIES'))
-        return WebDriverWait(self.driver, self.wait).until(
+        letter = WebDriverWait(self.driver, self.wait).until(
             ec.presence_of_element_located((By.ID, 'currentLetter'))).text
+        self._get_answers(categories, letter)
 
-    def send_answers(self, answers):
+    def _get_answers(self, categories, letter):
+        answers = []
+        for category in categories:
+            try:
+                answers.append(self.database.get_random_answer(category, letter))
+            except KeyError:
+                answers.append('')
+        self._get_input_fields(answers)
+
+    def _get_input_fields(self, answers):
         input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
-        for answer, input_field in zip(answers, input_fields):
+        self._send_answers(input_fields, answers)
+
+    def _send_answers(self, input_fields, answers):
+        for input_field, answer in zip(input_fields, answers):
             input_field.clear()
             input_field.send_keys(answer)
         self.driver.find_element_by_id('gameForm:checkSendBtn').send_keys(Keys.RETURN)
+        self._confirm_results()
 
-    def confirm_results(self):
+    def _confirm_results(self):
         WebDriverWait(self.driver, self.wait).until(ec.title_contains('CONFIRMATION_RESULTS'))
         wait = WebDriverWait(self.driver, self.wait)
         confirm_button = wait.until(ec.presence_of_element_located((By.ID, 'gameForm:j_idt226')))
         confirm_button.send_keys(Keys.RETURN)
-
-    @classmethod
-    def get_answers(cls, categories, current_letter):
-        answers = []
-        for category in categories:
-            answers.append(cls.get_answer(category, current_letter))
-        return answers
-
-    @classmethod
-    def get_answer(cls, category, current_letter):
-        url = SLFBot.answers_base_url + '/buchstabe-' + current_letter.lower()
-        res = requests.get(url, verify=False)
-        res.raise_for_status()
-        soup = BeautifulSoup(res.text, 'html.parser')
-        reg_exp = re.compile(cls.game_answers_couplers[category])
-        category_tag = soup.find('h3', text=reg_exp)
-        answer_tags = None
-        for next_element in category_tag.next_elements:
-            if next_element.name == 'ul':
-                answer_tags = next_element.find_all('li')
-                break
-        if not answer_tags:
-            return f'{current_letter} ({category}) does not exist'
-        else:
-            return random.choice(answer_tags).text.split()[0]
 
 
 class SLFDatabase:
