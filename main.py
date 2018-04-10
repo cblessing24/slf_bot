@@ -118,14 +118,11 @@ class SLFDatabase:
             pickle.dump(self.database, file_object)
 
     @staticmethod
-    def prepare_input(category, letter, answer):
-        category = category.lower()
-        letter = letter.upper()
-        answer = answer.lower()
-        return category, letter, answer
+    def prepare_input(raw_inputs):
+        return [raw_input.strip().lower() for raw_input in raw_inputs]
 
     def check_database(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
+        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
         if category not in self.database:
             return False
         if letter not in self.database[category]:
@@ -136,9 +133,9 @@ class SLFDatabase:
             return True
 
     def add_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
+        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
         if self.check_database(category, letter, answer):
-            raise ValueError('Answer already in database')
+            raise KeyError('Can not add answer (already in database)')
         if category not in self.database:
             self.database[category] = {}
         if letter not in self.database[category]:
@@ -146,9 +143,9 @@ class SLFDatabase:
         self.database[category][letter].append(answer)
 
     def remove_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input(raw_category, raw_letter, raw_answer)
+        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
         if not self.check_database(category, letter, answer):
-            raise ValueError('Answer not in database')
+            raise KeyError('Can not remove answer (not in database)')
         self.database[category][letter].remove(answer)
         if not self.database[category][letter]:
             del self.database[category][letter]
@@ -162,6 +159,10 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
+    slf_database.add_answer('Stadt', 'B', 'Berlin')
+    print(slf_database.check_database('Stadt', 'B', 'Berlin'))
+    slf_database.remove_answer('Stadt', 'B', 'Berlin')
+    print(slf_database.check_database('Stadt', 'B', 'Berlin'))
 
 
 def download_answers(database):
