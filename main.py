@@ -121,20 +121,31 @@ class SLFDatabase:
     def prepare_input(raw_inputs):
         return [raw_input.strip().lower() for raw_input in raw_inputs]
 
-    def check_database(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
-        if category not in self.database:
-            return False
-        if letter not in self.database[category]:
-            return False
-        if answer not in self.database[category][letter]:
-            return False
-        else:
+    def check_database_for_category(self, raw_category):
+        category = self.prepare_input([raw_category])
+        if category in self.database:
             return True
+        else:
+            return False
+
+    def check_database_for_letter(self, raw_category, raw_letter):
+        category, letter = self.prepare_input([raw_category, raw_letter])
+        if self.check_database_for_category(category):
+            if letter in self.database[category]:
+                return True
+        return False
+
+    def check_database_for_answer(self, raw_category, raw_letter, raw_answer):
+        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
+        if self.check_database_for_category(category):
+            if self.check_database_for_letter(category, letter):
+                if answer in self.database[category][letter]:
+                    return True
+        return False
 
     def add_answer(self, raw_category, raw_letter, raw_answer):
         category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
-        if self.check_database(category, letter, answer):
+        if self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not add answer (already in database)')
         if category not in self.database:
             self.database[category] = {}
@@ -144,7 +155,7 @@ class SLFDatabase:
 
     def remove_answer(self, raw_category, raw_letter, raw_answer):
         category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
-        if not self.check_database(category, letter, answer):
+        if not self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not remove answer (not in database)')
         self.database[category][letter].remove(answer)
         if not self.database[category][letter]:
@@ -160,9 +171,9 @@ class SLFDatabase:
 def main():
     slf_database = SLFDatabase('slf_database')
     slf_database.add_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.check_database('Stadt', 'B', 'Berlin'))
+    print(slf_database.check_database_for_answer('Stadt', 'B', 'Berlin'))
     slf_database.remove_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.check_database('Stadt', 'B', 'Berlin'))
+    print(slf_database.check_database_for_answer('Stadt', 'B', 'Berlin'))
 
 
 def download_answers(database):
