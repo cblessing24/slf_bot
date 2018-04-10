@@ -111,11 +111,16 @@ class SLFDatabase:
                 self.database = pickle.load(file_object)
         else:
             self.database = {}
-            self.save_database()
+            self.save()
 
-    def save_database(self):
+    def save(self):
         with open(self.database_path, 'wb') as file_object:
             pickle.dump(self.database, file_object)
+
+    def reset(self):
+        os.remove(self.database_path)
+        self.database = {}
+        self.save()
 
     @staticmethod
     def _prepare_input(raw_inputs):
@@ -133,6 +138,7 @@ class SLFDatabase:
             return False
 
     def check_database_for_letter(self, raw_category, raw_letter):
+        # Returns True if the category exists and the letter exists within the category
         category, letter = self._prepare_input([raw_category, raw_letter])
         if self.check_database_for_category(category):
             if letter in self.database[category]:
@@ -140,6 +146,8 @@ class SLFDatabase:
         return False
 
     def check_database_for_answer(self, raw_category, raw_letter, raw_answer):
+        # Returns True if the category exists, the letter exists within the category
+        # and the answer exists within the letter
         category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
         if self.check_database_for_letter(category, letter):
             if answer in self.database[category][letter]:
@@ -152,7 +160,6 @@ class SLFDatabase:
             return self.database[category][letter]
         else:
             raise KeyError('Can not get answers (none in database)')
-
 
     def add_answer(self, raw_category, raw_letter, raw_answer):
         category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
@@ -181,9 +188,7 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_database.add_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.get_answers('Stadt', 'B'))
-    slf_database.remove_answer('Stadt', 'B', 'Berlin')
+    slf_database.reset()
     print(slf_database.get_answers('Stadt', 'B'))
 
 
