@@ -161,6 +161,10 @@ class SLFDatabase:
         else:
             raise KeyError('Can not get answers (none in database)')
 
+    def get_random_answer(self, raw_category, raw_letter):
+        answers = self.get_answers(raw_category, raw_letter)
+        return random.choice(answers)
+
     def add_answer(self, raw_category, raw_letter, raw_answer):
         category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
         if self.check_database_for_answer(category, letter, answer):
