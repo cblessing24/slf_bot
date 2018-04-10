@@ -118,33 +118,44 @@ class SLFDatabase:
             pickle.dump(self.database, file_object)
 
     @staticmethod
-    def prepare_input(raw_inputs):
-        return [raw_input.strip().lower() for raw_input in raw_inputs]
+    def _prepare_input(raw_inputs):
+        # Return first element in list if list only has one element, otherwise return a list
+        if len(raw_inputs) == 1:
+            return raw_inputs[0].strip().lower()
+        else:
+            return [raw_input.strip().lower() for raw_input in raw_inputs]
 
     def check_database_for_category(self, raw_category):
-        category = self.prepare_input([raw_category])
+        category = self._prepare_input([raw_category])
         if category in self.database:
             return True
         else:
             return False
 
     def check_database_for_letter(self, raw_category, raw_letter):
-        category, letter = self.prepare_input([raw_category, raw_letter])
+        category, letter = self._prepare_input([raw_category, raw_letter])
         if self.check_database_for_category(category):
             if letter in self.database[category]:
                 return True
         return False
 
     def check_database_for_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
-        if self.check_database_for_category(category):
-            if self.check_database_for_letter(category, letter):
-                if answer in self.database[category][letter]:
-                    return True
+        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
+        if self.check_database_for_letter(category, letter):
+            if answer in self.database[category][letter]:
+                return True
         return False
 
+    def get_answers(self, raw_category, raw_letter):
+        category, letter = self._prepare_input([raw_category, raw_letter])
+        if self.check_database_for_letter(category, letter):
+            return self.database[category][letter]
+        else:
+            raise KeyError('Can not get answers (none in database)')
+
+
     def add_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
+        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
         if self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not add answer (already in database)')
         if category not in self.database:
@@ -154,7 +165,7 @@ class SLFDatabase:
         self.database[category][letter].append(answer)
 
     def remove_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self.prepare_input([raw_category, raw_letter, raw_answer])
+        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
         if not self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not remove answer (not in database)')
         self.database[category][letter].remove(answer)
@@ -171,9 +182,9 @@ class SLFDatabase:
 def main():
     slf_database = SLFDatabase('slf_database')
     slf_database.add_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.check_database_for_answer('Stadt', 'B', 'Berlin'))
+    print(slf_database.get_answers('Stadt', 'B'))
     slf_database.remove_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.check_database_for_answer('Stadt', 'B', 'Berlin'))
+    print(slf_database.get_answers('Stadt', 'B'))
 
 
 def download_answers(database):
