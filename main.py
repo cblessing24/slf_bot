@@ -51,21 +51,29 @@ class SLFBot:
 
     def _get_answers(self, categories, letter):
         answers = []
+        missing_answer_flag = False
         for category in categories:
             try:
                 answers.append(self.database.get_random_answer(category, letter))
             except KeyError:
+                missing_answer_flag = True
                 answers.append('')
-        self._get_input_fields(answers)
+        self._get_input_fields(answers, missing_answer_flag)
 
-    def _get_input_fields(self, answers):
+    def _get_input_fields(self, answers, missing_answer_flag):
         input_fields = self.driver.find_element_by_id('gameForm:gameRow').find_elements_by_tag_name('input')
-        self._send_answers(input_fields, answers)
+        self._input_answers(input_fields, answers, missing_answer_flag)
 
-    def _send_answers(self, input_fields, answers):
+    def _input_answers(self, input_fields, answers, missing_answer_flag):
         for input_field, answer in zip(input_fields, answers):
             input_field.clear()
             input_field.send_keys(answer)
+        if missing_answer_flag:
+            self._confirm_results()
+        else:
+            self._send_answers()
+
+    def _send_answers(self):
         self.driver.find_element_by_id('gameForm:checkSendBtn').send_keys(Keys.RETURN)
         self._confirm_results()
 
@@ -194,7 +202,7 @@ class SLFDatabase:
 def main():
     slf_database = SLFDatabase('slf_database')
     slf_bot = SLFBot(slf_database)
-    slf_bot.play('https://stadtlandflussonline.net/g/AO2IFBWI')
+    slf_bot.play('https://stadtlandflussonline.net/g/APCIFIL4')
 
 
 if __name__ == '__main__':
