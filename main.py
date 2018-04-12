@@ -87,8 +87,8 @@ class SLFBot:
 def input_method(original_method):
     def wrapper_function(instance, *raw_inputs):
         if len(raw_inputs) == 1:
-            input = raw_inputs[0].strip().lower()
-            return original_method(instance, input)
+            input_ = raw_inputs[0].strip().lower()
+            return original_method(instance, input_)
         else:
             inputs = [raw_input.strip().lower() for raw_input in raw_inputs]
             return original_method(instance, *inputs)
