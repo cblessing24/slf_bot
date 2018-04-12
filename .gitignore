@@ -102,6 +102,3 @@ ENV/
 
 # pycharm
 .idea
-
-# Stadt, Land, Fluss database
-slf_database
