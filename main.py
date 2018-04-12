@@ -115,14 +115,6 @@ class SLFDatabase:
         self.database = {}
         self.save()
 
-    @staticmethod
-    def _prepare_input(raw_inputs):
-        # Return first element in list if list only has one element, otherwise return a list
-        if len(raw_inputs) == 1:
-            return raw_inputs[0].strip().lower()
-        else:
-            return [raw_input.strip().lower() for raw_input in raw_inputs]
-
     @input_method
     def check_database_for_category(self, category):
         if category in self.database:
