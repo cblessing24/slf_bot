@@ -205,14 +205,7 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_database.add_answer('Stadt', 'B', 'Berlin')
-    print(slf_database.check_database_for_category('Stadt'))
-    print(slf_database.check_database_for_letter('Stadt', 'b'))
-    print(slf_database.check_database_for_answer('Stadt', 'B', 'berLIN'))
-    slf_database.remove_answer('stadT', 'B', 'BERlin')
-    print(slf_database.check_database_for_category('Stadt'))
-    print(slf_database.check_database_for_letter('Stadt', 'b'))
-    print(slf_database.check_database_for_answer('Stadt', 'B', 'berLIN'))
+    slf_database.reset()
 
 
 if __name__ == '__main__':
