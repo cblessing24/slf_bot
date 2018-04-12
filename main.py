@@ -84,6 +84,17 @@ class SLFBot:
         confirm_button.send_keys(Keys.RETURN)
 
 
+def input_method(original_method):
+    def wrapper_function(instance, *raw_inputs):
+        if len(raw_inputs) == 1:
+            input = raw_inputs[0].strip().lower()
+            return original_method(instance, input)
+        else:
+            inputs = [raw_input.strip().lower() for raw_input in raw_inputs]
+            return original_method(instance, *inputs)
+    return wrapper_function
+
+
 class SLFDatabase:
 
     def __init__(self, database_path):
@@ -112,43 +123,44 @@ class SLFDatabase:
         else:
             return [raw_input.strip().lower() for raw_input in raw_inputs]
 
-    def check_database_for_category(self, raw_category):
-        category = self._prepare_input([raw_category])
+    @input_method
+    def check_database_for_category(self, category):
         if category in self.database:
             return True
         else:
             return False
 
-    def check_database_for_letter(self, raw_category, raw_letter):
+    @input_method
+    def check_database_for_letter(self, category, letter):
         # Returns True if the category exists and the letter exists within the category
-        category, letter = self._prepare_input([raw_category, raw_letter])
         if self.check_database_for_category(category):
             if letter in self.database[category]:
                 return True
         return False
 
-    def check_database_for_answer(self, raw_category, raw_letter, raw_answer):
+    @input_method
+    def check_database_for_answer(self, category, letter, answer):
         # Returns True if the category exists, the letter exists within the category
         # and the answer exists within the letter
-        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
         if self.check_database_for_letter(category, letter):
             if answer in self.database[category][letter]:
                 return True
         return False
 
-    def get_answers(self, raw_category, raw_letter):
-        category, letter = self._prepare_input([raw_category, raw_letter])
+    @input_method
+    def get_answers(self, category, letter):
         if self.check_database_for_letter(category, letter):
             return self.database[category][letter]
         else:
             raise KeyError('Can not get answers (none in database)')
 
-    def get_random_answer(self, raw_category, raw_letter):
-        answers = self.get_answers(raw_category, raw_letter)
+    @input_method
+    def get_random_answer(self, category, letter):
+        answers = self.get_answers(category, letter)
         return random.choice(answers)
 
-    def add_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
+    @input_method
+    def add_answer(self, category, letter, answer):
         if self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not add answer (already in database)')
         if category not in self.database:
@@ -157,8 +169,8 @@ class SLFDatabase:
             self.database[category][letter] = []
         self.database[category][letter].append(answer)
 
-    def remove_answer(self, raw_category, raw_letter, raw_answer):
-        category, letter, answer = self._prepare_input([raw_category, raw_letter, raw_answer])
+    @input_method
+    def remove_answer(self, category, letter, answer):
         if not self.check_database_for_answer(category, letter, answer):
             raise KeyError('Can not remove answer (not in database)')
         self.database[category][letter].remove(answer)
@@ -201,8 +213,14 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_bot = SLFBot(slf_database)
-    slf_bot.play('https://stadtlandflussonline.net/g/APCIFIL4')
+    slf_database.add_answer('Stadt', 'B', 'Berlin')
+    print(slf_database.check_database_for_category('Stadt'))
+    print(slf_database.check_database_for_letter('Stadt', 'b'))
+    print(slf_database.check_database_for_answer('Stadt', 'B', 'berLIN'))
+    slf_database.remove_answer('stadT', 'B', 'BERlin')
+    print(slf_database.check_database_for_category('Stadt'))
+    print(slf_database.check_database_for_letter('Stadt', 'b'))
+    print(slf_database.check_database_for_answer('Stadt', 'B', 'berLIN'))
 
 
 if __name__ == '__main__':
