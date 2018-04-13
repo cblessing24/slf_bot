@@ -85,6 +85,7 @@ class SLFBot:
 
 
 def input_method(original_method):
+
     def wrapper_function(instance, *raw_inputs):
         if len(raw_inputs) == 1:
             input_ = raw_inputs[0].strip().lower()
@@ -92,6 +93,7 @@ def input_method(original_method):
         else:
             inputs = [raw_input.strip().lower() for raw_input in raw_inputs]
             return original_method(instance, *inputs)
+
     return wrapper_function
 
 
@@ -116,35 +118,8 @@ class SLFDatabase:
         self.save()
 
     @input_method
-    def check_database_for_category(self, category):
-        if category in self.database:
-            return True
-        else:
-            return False
-
-    @input_method
-    def check_database_for_letter(self, category, letter):
-        # Returns True if the category exists and the letter exists within the category
-        if self.check_database_for_category(category):
-            if letter in self.database[category]:
-                return True
-        return False
-
-    @input_method
-    def check_database_for_answer(self, category, letter, answer):
-        # Returns True if the category exists, the letter exists within the category
-        # and the answer exists within the letter
-        if self.check_database_for_letter(category, letter):
-            if answer in self.database[category][letter]:
-                return True
-        return False
-
-    @input_method
     def get_answers(self, category, letter):
-        if self.check_database_for_letter(category, letter):
-            return self.database[category][letter]
-        else:
-            raise KeyError('Can not get answers (none in database)')
+        return list(self.database[category][letter])
 
     @input_method
     def get_random_answer(self, category, letter):
@@ -153,23 +128,28 @@ class SLFDatabase:
 
     @input_method
     def add_answer(self, category, letter, answer):
-        if self.check_database_for_answer(category, letter, answer):
-            raise KeyError('Can not add answer (already in database)')
-        if category not in self.database:
-            self.database[category] = {}
-        if letter not in self.database[category]:
-            self.database[category][letter] = []
-        self.database[category][letter].append(answer)
+        try:
+            self.database[category][letter].add(answer)
+        except KeyError as error:
+            missing_key = error.args[0]
+            if missing_key == category:
+                self.database[category] = {letter: {answer}}
+            elif missing_key == letter:
+                self.database[category][letter] = {letter: {answer}}
 
     @input_method
     def remove_answer(self, category, letter, answer):
-        if not self.check_database_for_answer(category, letter, answer):
-            raise KeyError('Can not remove answer (not in database)')
-        self.database[category][letter].remove(answer)
-        if not self.database[category][letter]:
-            del self.database[category][letter]
-        if not self.database[category]:
-            del self.database[category]
+        try:
+            self.database[category][letter].remove(answer)
+        except KeyError:
+            print('Can not delete answer (not in database)')
+            return False
+        else:
+            if not self.database[category][letter]:
+                del self.database[category][letter]
+            if not self.database[category]:
+                del self.database[category]
+            return True
 
     def print_categories(self):
         for category in self.database.keys():
@@ -205,7 +185,9 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_database.reset()
+    slf_database.add_answer('Stadt', 'B', 'Berlin')
+    slf_database.add_answer('Stadt', 'B', 'Bern')
+    print(slf_database.get_random_answer('Stadt', 'B'))
 
 
 if __name__ == '__main__':
