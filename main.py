@@ -135,7 +135,7 @@ class SLFDatabase:
             if missing_key == category:
                 self.database[category] = {letter: {answer}}
             elif missing_key == letter:
-                self.database[category][letter] = {letter: {answer}}
+                self.database[category][letter] = {answer}
 
     @input_method
     def remove_answer(self, category, letter, answer):
@@ -185,9 +185,8 @@ class SLFDatabase:
 
 def main():
     slf_database = SLFDatabase('slf_database')
-    slf_database.add_answer('Stadt', 'B', 'Berlin')
-    slf_database.add_answer('Stadt', 'B', 'Bern')
-    print(slf_database.get_random_answer('Stadt', 'B'))
+    slf_bot = SLFBot(slf_database)
+    slf_bot.play('https://stadtlandflussonline.net/g/APAIF6LO')
 
 
 if __name__ == '__main__':
